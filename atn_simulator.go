@@ -4,6 +4,8 @@
 
 package antlr
 
+import "context"
+
 var ATNSimulatorError = NewDFAState(0x7FFFFFFF, NewATNConfigSet(false))
 
 type IATNSimulator interface {
@@ -16,6 +18,7 @@ type BaseATNSimulator struct {
 	atn                *ATN
 	sharedContextCache *PredictionContextCache
 	decisionToDFA      []*DFA
+	ctx                context.Context
 }
 
 func (b *BaseATNSimulator) getCachedContext(context *PredictionContext) *PredictionContext {
@@ -38,4 +41,15 @@ func (b *BaseATNSimulator) ATN() *ATN {
 
 func (b *BaseATNSimulator) DecisionToDFA() []*DFA {
 	return b.decisionToDFA
+}
+
+func (p *BaseATNSimulator) GetContextError() error {
+	if p.ctx == nil {
+		return nil
+	}
+	return p.ctx.Err()
+}
+
+func (p *BaseATNSimulator) SetContext(ctx context.Context) {
+	p.ctx = ctx
 }
