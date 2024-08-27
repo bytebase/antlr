@@ -5,6 +5,7 @@
 package antlr
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -1004,6 +1005,7 @@ func (p *ParserATNSimulator) closureCheckingStopState(config *ATNConfig, configs
 	stack = append(stack, config)
 
 	for len(stack) > 0 {
+		p.panicIfContextErr()
 		currConfig := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
 
@@ -1121,6 +1123,7 @@ func (p *ParserATNSimulator) closureWork(config *ATNConfig, configs *ATNConfigSe
 		// both epsilon transitions and non-epsilon transitions.
 	}
 	for i := 0; i < len(state.GetTransitions()); i++ {
+		p.panicIfContextErr()
 		if i == 0 && p.canDropLoopEntryEdgeInLeftRecursiveRule(config) {
 			continue
 		}
@@ -1663,4 +1666,14 @@ func (p *ParserATNSimulator) ReportAmbiguity(dfa *DFA, _ *DFAState, startIndex, 
 	if p.parser != nil {
 		p.parser.GetErrorListenerDispatch().ReportAmbiguity(p.parser, dfa, startIndex, stopIndex, exact, ambigAlts, configs)
 	}
+}
+
+func (p *ParserATNSimulator) panicIfContextErr() {
+	if e := p.GetContextError(); e != nil {
+		panic(e)
+	}
+}
+
+func (p *ParserATNSimulator) SetContext(ctx context.Context) {
+	p.BaseATNSimulator.SetContext(ctx)
 }
